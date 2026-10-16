@@ -1,42 +1,34 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SLIDES, type SlideData } from './data/slides';
 import { InteractiveDiagram } from './components/InteractiveDiagram';
 import { 
   ChevronLeft, ChevronRight, Maximize2, Minimize2, 
   Download, ExternalLink, Terminal, 
-  CheckCircle2, HelpCircle
+  CheckCircle2, HelpCircle, ArrowUp, Menu, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
 export const App: React.FC = () => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
-  const [direction, setDirection] = useState<number>(0); // 1 = next, -1 = prev
+  const [direction, setDirection] = useState<number>(0);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [showHelp, setShowHelp] = useState<boolean>(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [selectedScreenshotIndex, setSelectedScreenshotIndex] = useState<number>(0);
 
   const totalSlides = SLIDES.length;
   const slide: SlideData = SLIDES[currentSlideIndex];
 
-  // Touch gesture handling
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-
-  // Navigation handlers with animation direction
+  // Navigation handlers for desktop slide mode
   const nextSlide = useCallback(() => {
     if (currentSlideIndex < totalSlides - 1) {
       setDirection(1);
       setCurrentSlideIndex((prev) => prev + 1);
       setSelectedScreenshotIndex(0);
 
-      // Trigger celebratory confetti on last slide
       if (currentSlideIndex === totalSlides - 2) {
-        confetti({
-          particleCount: 80,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
+        confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
       }
     }
   }, [currentSlideIndex, totalSlides]);
@@ -57,7 +49,7 @@ export const App: React.FC = () => {
     }
   };
 
-  // Keyboard navigation
+  // Keyboard navigation for desktop mode
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['input', 'textarea'].includes((e.target as HTMLElement).tagName.toLowerCase())) {
@@ -89,6 +81,7 @@ export const App: React.FC = () => {
           break;
         case 'Escape':
           setShowHelp(false);
+          setMobileMenuOpen(false);
           break;
       }
     };
@@ -96,31 +89,6 @@ export const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [nextSlide, prevSlide]);
-
-  // Touch swipe events
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null || touchStartY.current === null) return;
-
-    const diffX = touchStartX.current - e.changedTouches[0].clientX;
-    const diffY = touchStartY.current - e.changedTouches[0].clientY;
-
-    // Detect horizontal swipe (at least 45px distance and horizontal > vertical)
-    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 45) {
-      if (diffX > 0) {
-        nextSlide();
-      } else {
-        prevSlide();
-      }
-    }
-
-    touchStartX.current = null;
-    touchStartY.current = null;
-  };
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -164,29 +132,28 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div 
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      className="w-screen h-[100dvh] bg-[#070b14] text-slate-100 flex flex-col justify-between overflow-hidden relative select-none"
-    >
+    <div className="w-full min-h-screen bg-[#070b14] text-slate-100 flex flex-col justify-between relative selection:bg-sky-500/30 selection:text-sky-200">
+      
       {/* Background Subtle Ambient Glows */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed top-0 left-1/4 w-96 h-96 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
 
-      {/* TOP BAR / RUNNING HEADER (With Safe-Area Inset Support) */}
-      <header className="pt-[env(safe-area-inset-top,0px)] border-b border-slate-800/80 px-4 sm:px-6 flex items-center justify-between z-20 bg-[#070b14]/90 backdrop-blur-md h-14 sm:h-16">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <span className="font-mono font-extrabold text-xs sm:text-sm tracking-wider text-slate-100">
+      {/* =========================================================================
+          UNIVERSAL HEADER
+          ========================================================================= */}
+      <header className="sticky top-0 lg:fixed lg:top-0 w-full z-40 bg-[#070b14]/90 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <a href="/portfolio/" className="font-mono font-extrabold text-sm tracking-wider text-slate-100 hover:text-sky-400 transition-colors">
             ZIDANE SC
-          </span>
+          </a>
           <span className="text-slate-600 hidden sm:inline">•</span>
-          <span className="text-[11px] font-mono text-slate-400 hidden lg:inline">
+          <span className="text-xs font-mono text-slate-400 hidden lg:inline">
             SOFTWARE ENGINEER | FULL STACK & PLATFORM ARCHITECTURE
           </span>
         </div>
 
-        {/* Desktop Stepper Dots (Hidden on Mobile) */}
-        <div className="hidden sm:flex items-center gap-1.5 overflow-x-auto max-w-[45%] px-2">
+        {/* Desktop Stepper Dots (Desktop only) */}
+        <div className="hidden lg:flex items-center gap-1.5 px-2">
           {SLIDES.map((s, idx) => (
             <button
               key={s.id}
@@ -201,253 +168,496 @@ export const App: React.FC = () => {
           ))}
         </div>
 
-        {/* Mobile Linear Progress Indicator */}
-        <div className="flex sm:hidden flex-1 mx-3 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-sky-400 transition-all duration-300 rounded-full"
-            style={{ width: `${((currentSlideIndex + 1) / totalSlides) * 100}%` }}
-          />
-        </div>
-
-        {/* Right Utility Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-2 font-mono text-xs">
+        {/* Right Header Controls */}
+        <div className="flex items-center gap-2 font-mono text-xs">
           <a
             href="/portfolio/Muhammad-Zidane-Sc-Resume.pdf"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-slate-500 text-slate-200 transition-colors text-[11px]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-slate-500 text-slate-200 transition-colors"
           >
             <Download className="w-3.5 h-3.5 text-sky-400" />
-            <span>CV</span>
+            <span className="text-xs font-semibold">CV PDF</span>
           </a>
 
+          {/* Desktop Shortcuts Button */}
           <button
             onClick={() => setShowHelp(true)}
-            className="p-2 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800/50 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+            className="hidden lg:flex p-2 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800/50 transition-colors"
             title="Keyboard Shortcuts (H)"
           >
             <HelpCircle className="w-4 h-4" />
           </button>
 
+          {/* Desktop Fullscreen Toggle */}
           <button
             onClick={toggleFullscreen}
-            className="hidden sm:flex p-2 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800/50 transition-colors min-w-[36px] min-h-[36px] items-center justify-center"
+            className="hidden lg:flex p-2 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800/50 transition-colors"
             title="Toggle Fullscreen (F)"
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
+
+          {/* Mobile Menu Toggle Button */}
+          <button
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            className="flex lg:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            aria-label="Table of Contents"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
       </header>
 
-      {/* MAIN SLIDE STAGE (Split Layout with Smooth Transitions) */}
-      <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-2 sm:py-3 overflow-y-auto z-10 flex flex-col justify-center">
-        <AnimatePresence custom={direction} mode="wait">
+      {/* =========================================================================
+          MOBILE JUMP NAVIGATION DRAWER
+          ========================================================================= */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
           <motion.div
-            key={slide.id}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            className="w-full grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-center"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="fixed inset-x-0 top-14 bg-slate-950/95 border-b border-slate-800 z-50 p-4 lg:hidden max-h-[75vh] overflow-y-auto backdrop-blur-xl shadow-2xl"
           >
-            {/* LEFT PANEL: Interactive Diagram OR Screenshot Showcase (Hidden on Cover Slide in Mobile) */}
-            <div className={`lg:col-span-5 h-[260px] sm:h-[320px] lg:h-[430px] w-full flex flex-col justify-center ${
-              slide.id === 'cover' ? 'hidden lg:flex' : 'flex'
-            }`}>
-              {slide.diagramType ? (
-                <InteractiveDiagram type={slide.diagramType} />
-              ) : slide.screenshots && slide.screenshots.length > 0 ? (
-                <div className="w-full h-full flex flex-col bg-slate-950/70 border border-slate-800 rounded-xl overflow-hidden shadow-2xl backdrop-blur-sm">
-                  {/* Screenshot Display */}
-                  <div className="flex-1 relative bg-black/60 flex items-center justify-center p-2 overflow-hidden group">
-                    <img
-                      src={slide.screenshots[selectedScreenshotIndex].src}
-                      alt={slide.screenshots[selectedScreenshotIndex].title}
-                      className="max-h-full max-w-full object-contain rounded-lg transition-transform duration-300 group-hover:scale-[1.02]"
-                    />
-                  </div>
-
-                  {/* Multi-Screenshot Selector Tabs if > 1 */}
-                  {slide.screenshots.length > 1 && (
-                    <div className="p-1.5 bg-slate-900 border-t border-slate-800 flex gap-1.5 overflow-x-auto">
-                      {slide.screenshots.map((shot, idx) => (
-                        <button
-                          key={shot.title}
-                          onClick={() => setSelectedScreenshotIndex(idx)}
-                          className={`px-2 py-1 text-[11px] rounded font-mono transition-colors whitespace-nowrap ${
-                            idx === selectedScreenshotIndex
-                              ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
-                              : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                          }`}
-                        >
-                          {shot.title}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Caption */}
-                  <div className="px-3 py-1.5 bg-slate-900/90 text-[11px] text-slate-400 font-mono border-t border-slate-800/80 truncate">
-                    {slide.screenshots[selectedScreenshotIndex].caption || slide.screenshots[selectedScreenshotIndex].title}
-                  </div>
-                </div>
-              ) : (
-                // Fallback Cover Visual Badge
-                <div className="w-full h-full flex flex-col justify-center items-center p-6 bg-slate-950/60 border border-slate-800 rounded-xl relative overflow-hidden">
-                  <motion.div 
-                    whileHover={{ scale: 1.05 }}
-                    className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-sky-500/20 mb-4"
-                  >
-                    <Terminal className="w-10 h-10 text-white" />
-                  </motion.div>
-                  <div className="font-mono text-xs text-slate-200 font-bold tracking-wider">
-                    PLATFORM & DISTRIBUTED SYSTEMS
-                  </div>
-                  <div className="text-[11px] text-slate-500 text-center mt-1.5 font-mono">
-                    5+ Years • 100+ Production Features • Squad Lead
-                  </div>
-                </div>
-              )}
+            <div className="text-[11px] font-mono text-slate-500 uppercase tracking-wider mb-2 font-bold">
+              Table of Contents
             </div>
+            <div className="space-y-1">
+              {SLIDES.map((s, idx) => (
+                <a
+                  key={s.id}
+                  href={`#${s.id}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-lg text-xs font-mono text-slate-300 hover:bg-slate-900 border border-transparent hover:border-slate-800 transition-colors"
+                >
+                  <span className="truncate pr-2">{idx + 1}. {s.title}</span>
+                  <span className={`text-[10px] uppercase px-1.5 py-0.5 rounded border ${getCategoryBadgeClass(s.categoryColor)}`}>
+                    {s.category.split(' ')[0]}
+                  </span>
+                </a>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            {/* RIGHT PANEL: High-Density Technical Specifications */}
-            <div className={`${slide.id === 'cover' ? 'lg:col-span-7 col-span-12' : 'lg:col-span-7 col-span-12'} flex flex-col justify-center space-y-2 sm:space-y-2.5 max-h-full py-1`}>
-              
-              {/* Category Eyebrow Badge */}
-              <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-mono font-bold tracking-wider px-2 py-0.5 rounded-full border ${getCategoryBadgeClass(slide.categoryColor)}`}>
-                  {slide.category}
-                </span>
-              </div>
-
-              {/* Slide Title & Subtitle */}
-              <div>
-                <h1 className="text-lg sm:text-xl lg:text-2xl font-extrabold text-white tracking-tight leading-snug">
-                  {slide.title}
-                </h1>
-                <p className="text-xs font-medium text-slate-400 mt-0.5">
-                  {slide.subtitle}
-                </p>
-              </div>
-
-              {/* Problem Statement Box */}
-              <div className="p-2.5 bg-slate-900/80 border-l-2 border-amber-500 rounded-r-lg text-xs leading-relaxed text-slate-300">
-                <span className="font-bold text-amber-400 uppercase tracking-wide mr-1.5 font-mono text-[10px]">
-                  Challenge:
-                </span>
-                {slide.problem}
-              </div>
-
-              {/* Architectural Solution Bullets */}
-              <div className="space-y-1">
-                <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                  Architectural Solution:
-                </div>
-                <ul className="space-y-1 text-xs text-slate-300">
-                  {slide.solution.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-1.5">
-                      <span className="text-sky-400 font-bold">•</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Quantified Production Impact Cards */}
-              <div>
-                <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Verified Production Impact:
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  {slide.impact.map((imp, idx) => (
-                    <motion.div 
-                      key={idx} 
-                      whileHover={{ scale: 1.01 }}
-                      className="p-1.5 sm:p-2 bg-slate-900/90 border border-slate-800 rounded-lg flex items-center gap-2"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                      <span className="text-[11px] font-semibold text-slate-200">{imp}</span>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Tech Stack Pills & Direct Links */}
-              <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/80">
-                <div className="flex flex-wrap gap-1">
-                  {slide.stack.map((tech) => (
-                    <span key={tech} className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/60 rounded text-[10px] font-mono text-slate-300">
-                      {tech}
-                    </span>
-                  ))}
+      {/* =========================================================================
+          DESKTOP VIEW: 100vh Interactive Split Presentation Deck (lg:flex)
+          ========================================================================= */}
+      <div className="hidden lg:flex flex-col justify-between w-full h-screen pt-16 pb-16 overflow-hidden">
+        <main className="flex-1 w-full max-w-7xl mx-auto px-8 py-4 grid grid-cols-12 gap-8 items-center overflow-hidden">
+          
+          {/* Left Panel: Interactive Diagram OR Screenshot Showcase */}
+          <div className="col-span-5 h-[460px] w-full flex flex-col justify-center">
+            {slide.diagramType ? (
+              <InteractiveDiagram type={slide.diagramType} />
+            ) : slide.screenshots && slide.screenshots.length > 0 ? (
+              <div className="w-full h-full flex flex-col bg-slate-950/70 border border-slate-800 rounded-xl overflow-hidden shadow-2xl backdrop-blur-sm">
+                <div className="flex-1 relative bg-black/60 flex items-center justify-center p-2 overflow-hidden group">
+                  <img
+                    src={slide.screenshots[selectedScreenshotIndex].src}
+                    alt={slide.screenshots[selectedScreenshotIndex].title}
+                    className="max-h-full max-w-full object-contain rounded-lg transition-transform duration-300 group-hover:scale-[1.02]"
+                  />
                 </div>
 
-                {/* Direct External Links if any */}
-                {slide.links && slide.links.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {slide.links.map((link) => (
-                      <a
-                        key={link.label}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-[11px] font-mono font-bold text-sky-400 hover:text-sky-300 transition-colors"
+                {slide.screenshots.length > 1 && (
+                  <div className="p-1.5 bg-slate-900 border-t border-slate-800 flex gap-1.5 overflow-x-auto">
+                    {slide.screenshots.map((shot, idx) => (
+                      <button
+                        key={shot.title}
+                        onClick={() => setSelectedScreenshotIndex(idx)}
+                        className={`px-2.5 py-1 text-[11px] rounded font-mono transition-colors whitespace-nowrap ${
+                          idx === selectedScreenshotIndex
+                            ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
+                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        }`}
                       >
-                        <span>{link.label}</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+                        {shot.title}
+                      </button>
                     ))}
                   </div>
                 )}
-              </div>
 
-            </div>
-          </motion.div>
-        </AnimatePresence>
+                <div className="px-3.5 py-2 bg-slate-900/90 text-xs text-slate-400 font-mono border-t border-slate-800/80 truncate">
+                  {slide.screenshots[selectedScreenshotIndex].caption || slide.screenshots[selectedScreenshotIndex].title}
+                </div>
+              </div>
+            ) : (
+              <div className="w-full h-full flex flex-col justify-center items-center p-8 bg-slate-950/60 border border-slate-800 rounded-xl relative overflow-hidden">
+                <motion.div 
+                  whileHover={{ scale: 1.05 }}
+                  className="w-24 h-24 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-sky-500/20 mb-6"
+                >
+                  <Terminal className="w-12 h-12 text-white" />
+                </motion.div>
+                <div className="font-mono text-sm text-slate-200 font-bold tracking-wider">
+                  PLATFORM & DISTRIBUTED SYSTEMS
+                </div>
+                <div className="text-xs text-slate-500 text-center mt-2 font-mono">
+                  5+ Years • 100+ Production Features • Squad Lead
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Panel: Technical Breakdown */}
+          <div className="col-span-7 flex flex-col justify-center space-y-3.5 max-h-full py-1">
+            <AnimatePresence custom={direction} mode="wait">
+              <motion.div
+                key={slide.id}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                className="space-y-3.5"
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-mono font-bold tracking-wider px-2.5 py-0.5 rounded-full border ${getCategoryBadgeClass(slide.categoryColor)}`}>
+                    {slide.category}
+                  </span>
+                </div>
+
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug">
+                    {slide.title}
+                  </h1>
+                  <p className="text-sm font-medium text-slate-400 mt-0.5">
+                    {slide.subtitle}
+                  </p>
+                </div>
+
+                <div className="p-3 bg-slate-900/80 border-l-2 border-amber-500 rounded-r-lg text-xs leading-relaxed text-slate-300">
+                  <span className="font-bold text-amber-400 uppercase tracking-wide mr-1.5 font-mono text-[10px]">
+                    Challenge:
+                  </span>
+                  {slide.problem}
+                </div>
+
+                <div className="space-y-1">
+                  <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                    Architectural Solution:
+                  </div>
+                  <ul className="space-y-1 text-xs text-slate-300">
+                    {slide.solution.map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="text-sky-400 font-bold">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                    Verified Production Impact:
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {slide.impact.map((imp, idx) => (
+                      <motion.div 
+                        key={idx} 
+                        whileHover={{ scale: 1.01 }}
+                        className="p-2 bg-slate-900/90 border border-slate-800 rounded-lg flex items-center gap-2"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                        <span className="text-[11px] font-semibold text-slate-200">{imp}</span>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/80">
+                  <div className="flex flex-wrap gap-1.5">
+                    {slide.stack.map((tech) => (
+                      <span key={tech} className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/60 rounded text-[10px] font-mono text-slate-300">
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+
+                  {slide.links && slide.links.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {slide.links.map((link) => (
+                        <a
+                          key={link.label}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[11px] font-mono font-bold text-sky-400 hover:text-sky-300 transition-colors"
+                        >
+                          <span>{link.label}</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+        </main>
+
+        {/* Desktop Bottom Control Dock */}
+        <footer className="fixed bottom-0 w-full h-16 border-t border-slate-800/80 px-8 flex items-center justify-between bg-[#070b14]/90 backdrop-blur-md z-30">
+          <div className="flex items-center gap-4 text-xs font-mono text-slate-400">
+            <span className="font-bold text-slate-200 text-sm">
+              {String(currentSlideIndex + 1).padStart(2, '0')} / {String(totalSlides).padStart(2, '0')}
+            </span>
+            <span className="text-slate-600">|</span>
+            <span className="truncate max-w-sm">{slide.title}</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={prevSlide}
+              disabled={currentSlideIndex === 0}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all ${
+                currentSlideIndex === 0
+                  ? 'opacity-30 cursor-not-allowed bg-slate-900 text-slate-600'
+                  : 'bg-slate-900 border border-slate-700 hover:border-slate-500 text-slate-200 active:scale-95'
+              }`}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>PREV</span>
+            </button>
+
+            <button
+              onClick={nextSlide}
+              disabled={currentSlideIndex === totalSlides - 1}
+              className={`flex items-center gap-1.5 px-5 py-2 rounded-lg font-mono text-xs font-bold transition-all ${
+                currentSlideIndex === totalSlides - 1
+                  ? 'opacity-30 cursor-not-allowed bg-slate-900 text-slate-600'
+                  : 'bg-sky-500 hover:bg-sky-400 text-slate-950 shadow-md shadow-sky-500/20 active:scale-95'
+              }`}
+            >
+              <span>NEXT</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </footer>
       </div>
 
-      {/* BOTTOM CONTROL DOCK (With Safe-Area Inset Support) */}
-      <footer className="pb-[env(safe-area-inset-bottom,0px)] border-t border-slate-800/80 px-4 sm:px-6 flex items-center justify-between bg-[#070b14]/90 backdrop-blur-md z-20 h-14 sm:h-16">
-        <div className="flex items-center gap-3 text-xs font-mono text-slate-400">
-          <span className="font-bold text-slate-200 text-sm">
-            {String(currentSlideIndex + 1).padStart(2, '0')} / {String(totalSlides).padStart(2, '0')}
-          </span>
-          <span className="hidden md:inline text-slate-600">|</span>
-          <span className="hidden md:inline truncate max-w-sm">{slide.title}</span>
-        </div>
+      {/* =========================================================================
+          MOBILE VIEW: Continuous Modern Vertical Case-Study Feed (lg:hidden)
+          ========================================================================= */}
+      <div className="flex lg:hidden flex-col w-full px-4 py-6 space-y-12 pb-24">
+        
+        {/* Mobile Hero Introduction */}
+        <section className="space-y-4 pt-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-sky-500/30 bg-sky-950/50 text-[11px] font-mono text-sky-400">
+            <Terminal className="w-3.5 h-3.5" />
+            <span>EXECUTIVE TECH PORTFOLIO</span>
+          </div>
 
-        {/* Navigation Buttons with large touch targets */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={prevSlide}
-            disabled={currentSlideIndex === 0}
-            className={`flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all min-h-[40px] ${
-              currentSlideIndex === 0
-                ? 'opacity-30 cursor-not-allowed bg-slate-900 text-slate-600'
-                : 'bg-slate-900 border border-slate-700 hover:border-slate-500 text-slate-200 active:scale-95'
-            }`}
+          <h1 className="text-3xl font-extrabold text-white tracking-tight leading-tight">
+            Muhammad Zidane Sc
+          </h1>
+          <p className="text-sm font-semibold text-sky-400 font-mono">
+            Software Engineer | Full Stack & Platform Architecture
+          </p>
+
+          <p className="text-xs text-slate-300 leading-relaxed">
+            5+ years building scalable microservices, search engines, and distributed platforms across Golang, TypeScript, and PostgreSQL. Currently Squad Lead (Backend) for Dealls & KantorKu HRIS.
+          </p>
+
+          {/* Core Stats Metric Strip */}
+          <div className="grid grid-cols-2 gap-2 pt-2">
+            <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl">
+              <div className="text-lg font-extrabold text-sky-400 font-mono">1.74M</div>
+              <div className="text-[11px] text-slate-400">Talents Matched</div>
+            </div>
+            <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl">
+              <div className="text-lg font-extrabold text-emerald-400 font-mono">&lt; 100ms</div>
+              <div className="text-[11px] text-slate-400">P95 Search Latency</div>
+            </div>
+            <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl">
+              <div className="text-lg font-extrabold text-purple-400 font-mono">936</div>
+              <div className="text-[11px] text-slate-400">Batch Ingestion Sync</div>
+            </div>
+            <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl">
+              <div className="text-lg font-extrabold text-amber-400 font-mono">&lt; 10ms</div>
+              <div className="text-[11px] text-slate-400">Retail POS Query Time</div>
+            </div>
+          </div>
+
+          {/* Quick Contact Buttons */}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <a
+              href="https://github.com/zidane-sc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-2.5 px-3 rounded-lg bg-slate-900 border border-slate-700 text-center text-xs font-mono font-bold text-slate-200 flex items-center justify-center gap-1.5"
+            >
+              <span>GitHub</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+            <a
+              href="https://www.linkedin.com/in/zidane-sc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-2.5 px-3 rounded-lg bg-sky-950/60 border border-sky-800/80 text-center text-xs font-mono font-bold text-sky-300 flex items-center justify-center gap-1.5"
+            >
+              <span>LinkedIn</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        </section>
+
+        {/* Continuous Showcase of All 12 Projects */}
+        {SLIDES.slice(1).map((item, idx) => (
+          <section key={item.id} id={item.id} className="pt-6 border-t border-slate-800/80 space-y-4 scroll-mt-20">
+            {/* Header info */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className={`text-[10px] font-mono font-bold tracking-wider px-2 py-0.5 rounded border ${getCategoryBadgeClass(item.categoryColor)}`}>
+                  {item.category}
+                </span>
+                <span className="text-[11px] font-mono text-slate-500 font-bold">
+                  CASE {String(idx + 1).padStart(2, '0')}
+                </span>
+              </div>
+              <h2 className="text-xl font-bold text-white tracking-tight">
+                {item.title}
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {item.subtitle}
+              </p>
+            </div>
+
+            {/* Visual Diagram or Image Container (Generous Height for Mobile) */}
+            <div className="w-full rounded-xl overflow-hidden border border-slate-800 bg-slate-950/60">
+              {item.diagramType ? (
+                <div className="min-h-[300px]">
+                  <InteractiveDiagram type={item.diagramType} />
+                </div>
+              ) : item.screenshots && item.screenshots.length > 0 ? (
+                <div className="space-y-2 p-2">
+                  <div className="relative bg-black/70 rounded-lg overflow-hidden flex items-center justify-center">
+                    <img
+                      src={item.screenshots[0].src}
+                      alt={item.screenshots[0].title}
+                      className="w-full h-auto object-contain max-h-[340px]"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-400 px-2 py-1">
+                    {item.screenshots[0].caption || item.screenshots[0].title}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            {/* Problem Box */}
+            <div className="p-3 bg-slate-900/90 border-l-2 border-amber-500 rounded-r-lg text-xs leading-relaxed text-slate-300">
+              <span className="font-bold text-amber-400 uppercase tracking-wide mr-1.5 font-mono text-[10px]">
+                Challenge:
+              </span>
+              {item.problem}
+            </div>
+
+            {/* Solutions */}
+            <div className="space-y-1.5">
+              <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                Architectural Solution:
+              </div>
+              <ul className="space-y-1.5 text-xs text-slate-300">
+                {item.solution.map((sol, sIdx) => (
+                  <li key={sIdx} className="flex items-start gap-2">
+                    <span className="text-sky-400 font-bold">•</span>
+                    <span>{sol}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Verified Impact Grid */}
+            <div className="space-y-1.5">
+              <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                Verified Production Impact:
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {item.impact.map((imp, iIdx) => (
+                  <div key={iIdx} className="p-2.5 bg-slate-900/90 border border-slate-800 rounded-lg flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                    <span className="text-xs font-semibold text-slate-200">{imp}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Tech Stack Chips & Links */}
+            <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/60">
+              <div className="flex flex-wrap gap-1">
+                {item.stack.map((tech) => (
+                  <span key={tech} className="px-2 py-0.5 bg-slate-800/80 border border-slate-700/60 rounded text-[10px] font-mono text-slate-300">
+                    {tech}
+                  </span>
+                ))}
+              </div>
+
+              {item.links && item.links.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1 w-full">
+                  {item.links.map((link) => (
+                    <a
+                      key={link.label}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs font-mono font-bold text-sky-400 hover:text-sky-300"
+                    >
+                      <span>{link.label}</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        ))}
+
+        {/* Mobile Floating Back-to-Top Button */}
+        <div className="pt-8 text-center">
+          <a
+            href="#"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-slate-900 border border-slate-700 text-xs font-mono text-slate-300 shadow-xl"
           >
-            <ChevronLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">PREV</span>
-          </button>
-
-          <button
-            onClick={nextSlide}
-            disabled={currentSlideIndex === totalSlides - 1}
-            className={`flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2 rounded-lg font-mono text-xs font-bold transition-all min-h-[40px] ${
-              currentSlideIndex === totalSlides - 1
-                ? 'opacity-30 cursor-not-allowed bg-slate-900 text-slate-600'
-                : 'bg-sky-500 hover:bg-sky-400 text-slate-950 shadow-md shadow-sky-500/20 active:scale-95'
-            }`}
-          >
-            <span className="hidden sm:inline">NEXT</span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
+            <ArrowUp className="w-4 h-4 text-sky-400" />
+            <span>Back to Top</span>
+          </a>
         </div>
-      </footer>
+      </div>
 
-      {/* KEYBOARD SHORTCUTS MODAL */}
+      {/* =========================================================================
+          MOBILE STICKY BOTTOM ACTION BAR (lg:hidden)
+          ========================================================================= */}
+      <div className="fixed bottom-0 inset-x-0 bg-[#070b14]/95 backdrop-blur-md border-t border-slate-800 px-4 py-3 flex lg:hidden items-center justify-between z-30 shadow-2xl">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-mono text-slate-400">Full Stack & Platform</span>
+          <span className="text-xs font-mono font-bold text-slate-100">Muhammad Zidane Sc</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <a
+            href="/portfolio/Muhammad-Zidane-Sc-Resume.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-mono text-xs font-bold flex items-center gap-1 shadow-md shadow-sky-500/20"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Get CV</span>
+          </a>
+          <a
+            href="mailto:zidanesc02@gmail.com"
+            className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 font-mono text-xs font-bold"
+          >
+            Contact
+          </a>
+        </div>
+      </div>
+
+      {/* KEYBOARD SHORTCUTS MODAL (Desktop) */}
       {showHelp && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <motion.div 
@@ -471,10 +681,6 @@ export const App: React.FC = () => {
                 <span className="bg-slate-800 px-2 py-0.5 rounded text-sky-400">Arrow Left / Backspace</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-800">
-                <span className="text-slate-400">Swipe (Mobile)</span>
-                <span className="bg-slate-800 px-2 py-0.5 rounded text-sky-400">Swipe Left / Right</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">Toggle Fullscreen</span>
                 <span className="bg-slate-800 px-2 py-0.5 rounded text-sky-400">F</span>
               </div>
@@ -492,6 +698,7 @@ export const App: React.FC = () => {
           </motion.div>
         </div>
       )}
+
     </div>
   );
 };
