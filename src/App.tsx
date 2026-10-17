@@ -16,9 +16,45 @@ export const App: React.FC = () => {
   const [showHelp, setShowHelp] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [selectedScreenshotIndex, setSelectedScreenshotIndex] = useState<number>(0);
+  const [mobileActiveIndex, setMobileActiveIndex] = useState<number>(0);
+  const [scrollProgress, setScrollProgress] = useState<number>(0);
 
   const totalSlides = SLIDES.length;
   const slide: SlideData = SLIDES[currentSlideIndex];
+
+  // Mobile scroll spy & progress
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalHeight > 0) {
+        setScrollProgress((window.scrollY / totalHeight) * 100);
+      }
+
+      const scrollPosition = window.scrollY + 180;
+      for (let i = SLIDES.length - 1; i >= 0; i--) {
+        const el = document.getElementById(SLIDES[i].id);
+        if (el && el.offsetTop <= scrollPosition) {
+          setMobileActiveIndex(i);
+          break;
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToMobileSection = (index: number) => {
+    if (index >= 0 && index < totalSlides) {
+      const targetId = SLIDES[index].id;
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (index === 0) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  };
 
   // Navigation handlers for desktop slide mode
   const nextSlide = useCallback(() => {
@@ -166,6 +202,14 @@ export const App: React.FC = () => {
               title={`Slide ${idx + 1}: ${s.title}`}
             />
           ))}
+        </div>
+
+        {/* Mobile Linear Progress Indicator */}
+        <div className="flex lg:hidden flex-1 mx-3 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-sky-400 transition-all duration-150 rounded-full"
+            style={{ width: `${Math.max(8, scrollProgress || ((mobileActiveIndex + 1) / totalSlides) * 100)}%` }}
+          />
         </div>
 
         {/* Right Header Controls */}
@@ -446,7 +490,7 @@ export const App: React.FC = () => {
       <div className="flex lg:hidden flex-col w-full px-4 py-6 space-y-12 pb-24">
         
         {/* Mobile Hero Introduction */}
-        <section className="space-y-4 pt-2">
+        <section id="cover" className="space-y-4 pt-2 scroll-mt-20">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-sky-500/30 bg-sky-950/50 text-[11px] font-mono text-sky-400">
             <Terminal className="w-3.5 h-3.5" />
             <span>EXECUTIVE TECH PORTFOLIO</span>
@@ -633,24 +677,53 @@ export const App: React.FC = () => {
       {/* =========================================================================
           MOBILE STICKY BOTTOM ACTION BAR (lg:hidden)
           ========================================================================= */}
-      <div className="fixed bottom-0 inset-x-0 bg-[#070b14]/95 backdrop-blur-md border-t border-slate-800 px-4 py-3 flex lg:hidden items-center justify-between z-30 shadow-2xl">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-mono text-slate-400">Full Stack & Platform</span>
-          <span className="text-xs font-mono font-bold text-slate-100">Muhammad Zidane Sc</span>
+      <div className="fixed bottom-0 inset-x-0 bg-[#070b14]/95 backdrop-blur-md border-t border-slate-800 px-4 py-2.5 flex lg:hidden items-center justify-between z-30 shadow-2xl pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))]">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => scrollToMobileSection(mobileActiveIndex - 1)}
+            disabled={mobileActiveIndex === 0}
+            className={`p-2 rounded-lg font-mono text-xs font-bold transition-all min-h-[38px] min-w-[38px] flex items-center justify-center ${
+              mobileActiveIndex === 0
+                ? 'opacity-30 cursor-not-allowed bg-slate-900 text-slate-600'
+                : 'bg-slate-900 border border-slate-700 hover:border-slate-500 text-slate-200 active:scale-95'
+            }`}
+            aria-label="Previous section"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          <span className="font-mono text-xs font-bold text-slate-300 px-1">
+            {String(mobileActiveIndex + 1).padStart(2, '0')} / {String(totalSlides).padStart(2, '0')}
+          </span>
+
+          <button
+            onClick={() => scrollToMobileSection(mobileActiveIndex + 1)}
+            disabled={mobileActiveIndex === totalSlides - 1}
+            className={`px-3 py-2 rounded-lg font-mono text-xs font-bold transition-all min-h-[38px] flex items-center gap-1 ${
+              mobileActiveIndex === totalSlides - 1
+                ? 'opacity-30 cursor-not-allowed bg-slate-900 text-slate-600'
+                : 'bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold active:scale-95 shadow-md shadow-sky-500/20'
+            }`}
+            aria-label="Next section"
+          >
+            <span>NEXT</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
+
         <div className="flex items-center gap-2">
           <a
             href="/portfolio/Muhammad-Zidane-Sc-Resume.pdf"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-mono text-xs font-bold flex items-center gap-1 shadow-md shadow-sky-500/20"
+            className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 hover:border-slate-500 text-slate-200 font-mono text-xs font-bold flex items-center gap-1 shadow-sm"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span>Get CV</span>
+            <Download className="w-3.5 h-3.5 text-sky-400" />
+            <span>CV</span>
           </a>
           <a
             href="mailto:zidanesc02@gmail.com"
-            className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 font-mono text-xs font-bold"
+            className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 hover:border-slate-500 text-slate-200 font-mono text-xs font-bold"
           >
             Contact
           </a>
