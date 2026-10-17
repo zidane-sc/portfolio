@@ -307,74 +307,72 @@ export const App: React.FC = () => {
           DESKTOP VIEW: 100vh Interactive Split Presentation Deck (lg:flex)
           ========================================================================= */}
       <div className="hidden lg:flex flex-col justify-between w-full h-screen pt-16 pb-16 overflow-hidden">
-        <main className="flex-1 w-full max-w-7xl mx-auto px-8 py-4 grid grid-cols-12 gap-8 items-center overflow-hidden">
-          
-          {/* Left Panel: Interactive Diagram OR Screenshot Showcase */}
-          <div className="col-span-5 h-[460px] w-full flex flex-col justify-center">
-            {slide.diagramType ? (
-              <InteractiveDiagram type={slide.diagramType} />
-            ) : slide.screenshots && slide.screenshots.length > 0 ? (
-              <div className="w-full h-full flex flex-col bg-slate-950/70 border border-slate-800 rounded-xl overflow-hidden shadow-2xl backdrop-blur-sm">
-                <div className="flex-1 relative bg-black/60 flex items-center justify-center p-2 overflow-hidden group">
-                  <img
-                    src={slide.screenshots[selectedScreenshotIndex].src}
-                    alt={slide.screenshots[selectedScreenshotIndex].title}
-                    className="max-h-full max-w-full object-contain rounded-lg transition-transform duration-300 group-hover:scale-[1.02]"
-                  />
-                </div>
+        <main className="flex-1 w-full max-w-7xl mx-auto px-8 py-3 overflow-hidden flex items-center">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={slide.id}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.16 }}
+              className="w-full grid grid-cols-12 gap-8 items-center"
+            >
+              {/* Left Panel: Interactive Diagram OR Screenshot Showcase */}
+              <div className="col-span-5 h-[480px] w-full flex flex-col justify-center">
+                {slide.diagramType ? (
+                  <InteractiveDiagram type={slide.diagramType} />
+                ) : slide.screenshots && slide.screenshots.length > 0 ? (
+                  <div className="w-full h-full flex flex-col bg-slate-950/70 border border-slate-800 rounded-xl overflow-hidden shadow-2xl backdrop-blur-sm">
+                    <div className="flex-1 relative bg-black/60 flex items-center justify-center p-2 overflow-hidden group">
+                      <img
+                        src={slide.screenshots[selectedScreenshotIndex].src}
+                        alt={slide.screenshots[selectedScreenshotIndex].title}
+                        className="max-h-full max-w-full object-contain rounded-lg transition-transform duration-300 group-hover:scale-[1.02]"
+                      />
+                    </div>
 
-                {slide.screenshots.length > 1 && (
-                  <div className="p-1.5 bg-slate-900 border-t border-slate-800 flex gap-1.5 overflow-x-auto">
-                    {slide.screenshots.map((shot, idx) => (
-                      <button
-                        key={shot.title}
-                        onClick={() => setSelectedScreenshotIndex(idx)}
-                        className={`px-2.5 py-1 text-[11px] rounded font-mono transition-colors whitespace-nowrap ${
-                          idx === selectedScreenshotIndex
-                            ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
-                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                        }`}
-                      >
-                        {shot.title}
-                      </button>
-                    ))}
+                    {slide.screenshots.length > 1 && (
+                      <div className="p-1.5 bg-slate-900 border-t border-slate-800 flex gap-1.5 overflow-x-auto">
+                        {slide.screenshots.map((shot, idx) => (
+                          <button
+                            key={shot.title}
+                            onClick={() => setSelectedScreenshotIndex(idx)}
+                            className={`px-2.5 py-1 text-[11px] rounded font-mono transition-colors whitespace-nowrap ${
+                              idx === selectedScreenshotIndex
+                                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
+                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                            }`}
+                          >
+                            {shot.title}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="px-3.5 py-2 bg-slate-900/90 text-xs text-slate-400 font-mono border-t border-slate-800/80 truncate">
+                      {slide.screenshots[selectedScreenshotIndex].caption || slide.screenshots[selectedScreenshotIndex].title}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex flex-col justify-center items-center p-8 bg-slate-950/60 border border-slate-800 rounded-xl relative overflow-hidden">
+                    <motion.div 
+                      whileHover={{ scale: 1.05 }}
+                      className="w-24 h-24 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-sky-500/20 mb-6"
+                    >
+                      <Terminal className="w-12 h-12 text-white" />
+                    </motion.div>
+                    <div className="font-mono text-sm text-slate-200 font-bold tracking-wider">
+                      PLATFORM & DISTRIBUTED SYSTEMS
+                    </div>
+                    <div className="text-xs text-slate-500 text-center mt-2 font-mono">
+                      5+ Years • 100+ Production Features • Squad Lead
+                    </div>
                   </div>
                 )}
-
-                <div className="px-3.5 py-2 bg-slate-900/90 text-xs text-slate-400 font-mono border-t border-slate-800/80 truncate">
-                  {slide.screenshots[selectedScreenshotIndex].caption || slide.screenshots[selectedScreenshotIndex].title}
-                </div>
               </div>
-            ) : (
-              <div className="w-full h-full flex flex-col justify-center items-center p-8 bg-slate-950/60 border border-slate-800 rounded-xl relative overflow-hidden">
-                <motion.div 
-                  whileHover={{ scale: 1.05 }}
-                  className="w-24 h-24 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-sky-500/20 mb-6"
-                >
-                  <Terminal className="w-12 h-12 text-white" />
-                </motion.div>
-                <div className="font-mono text-sm text-slate-200 font-bold tracking-wider">
-                  PLATFORM & DISTRIBUTED SYSTEMS
-                </div>
-                <div className="text-xs text-slate-500 text-center mt-2 font-mono">
-                  5+ Years • 100+ Production Features • Squad Lead
-                </div>
-              </div>
-            )}
-          </div>
 
-          {/* Right Panel: Technical Breakdown */}
-          <div className="col-span-7 flex flex-col justify-center space-y-3.5 max-h-full py-1">
-            <AnimatePresence custom={direction} mode="wait">
-              <motion.div
-                key={slide.id}
-                custom={direction}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                className="space-y-3.5"
-              >
+              {/* Right Panel: Technical Breakdown */}
+              <div className="col-span-7 flex flex-col justify-center space-y-3.5 max-h-full py-1">
                 <div className="flex items-center gap-2">
                   <span className={`text-[10px] font-mono font-bold tracking-wider px-2.5 py-0.5 rounded-full border ${getCategoryBadgeClass(slide.categoryColor)}`}>
                     {slide.category}
@@ -417,14 +415,13 @@ export const App: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     {slide.impact.map((imp, idx) => (
-                      <motion.div 
+                      <div 
                         key={idx} 
-                        whileHover={{ scale: 1.01 }}
                         className="p-2 bg-slate-900/90 border border-slate-800 rounded-lg flex items-center gap-2"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
                         <span className="text-[11px] font-semibold text-slate-200">{imp}</span>
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -455,10 +452,9 @@ export const App: React.FC = () => {
                     </div>
                   )}
                 </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </main>
 
         {/* Desktop Bottom Control Dock */}
