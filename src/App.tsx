@@ -22,6 +22,23 @@ export const App: React.FC = () => {
   const totalSlides = SLIDES.length;
   const slide: SlideData = SLIDES[currentSlideIndex];
 
+  // Hash-based initial routing & synchronisation
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash) {
+      const idx = SLIDES.findIndex((s) => s.id === hash);
+      if (idx !== -1) {
+        setCurrentSlideIndex(idx);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (SLIDES[currentSlideIndex]) {
+      window.history.replaceState(null, '', `#${SLIDES[currentSlideIndex].id}`);
+    }
+  }, [currentSlideIndex]);
+
   // Mobile scroll spy & progress
   useEffect(() => {
     const handleScroll = () => {
