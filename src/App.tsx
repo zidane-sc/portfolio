@@ -325,7 +325,7 @@ export const App: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="px-3.5 py-2 bg-slate-900/90 text-xs text-slate-400 font-mono border-t border-slate-800/80 truncate">
+                    <div className="px-3.5 py-2 bg-slate-900/90 text-[11px] text-slate-400 font-mono border-t border-slate-800/80 leading-snug">
                       {slide.screenshots[selectedScreenshotIndex].caption || slide.screenshots[selectedScreenshotIndex].title}
                     </div>
                   </div>
