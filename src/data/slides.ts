@@ -302,7 +302,7 @@ export const SLIDES: SlideData[] = [
     screenshots: [
       { title: 'Power Meter Telemetry', src: '/portfolio/assets/kamiko/power-meter.jpg', caption: 'Live electrical telemetry (363V, Current, Power) and time-series trending' },
       { title: 'JaGain Asset Management', src: '/portfolio/assets/kamiko/jagain.jpg', caption: 'Plant asset hierarchy, maintenance schedules, and work order tracking' },
-      { title: 'NAVR CCTV GIS Mapping', src: '/portfolio/assets/kamiko/navr-cctv.jpg', caption: 'Interactive Leaflet GIS map displaying real-time camera nodes' }
+      { title: 'NAVR CCTV Mapping', src: '/portfolio/assets/kamiko/navr-cctv.jpg', caption: 'Interactive Leaflet GIS map displaying real-time camera nodes' }
     ]
   },
 
