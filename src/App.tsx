@@ -284,16 +284,14 @@ export const App: React.FC = () => {
           ========================================================================= */}
       <div className="hidden lg:flex flex-col justify-between w-full h-screen pt-16 pb-16 overflow-hidden">
         <main className="flex-1 w-full max-w-7xl mx-auto px-8 py-3 overflow-hidden flex items-center">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={slide.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.16 }}
-              className="w-full grid grid-cols-12 gap-8 items-center"
-            >
-              {/* Left Panel: Interactive Diagram OR Screenshot Showcase */}
+          <motion.div
+            key={slide.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.15 }}
+            className="w-full grid grid-cols-12 gap-8 items-center"
+          >
+            {/* Left Panel: Interactive Diagram OR Screenshot Showcase */}
               <div className="col-span-5 h-[480px] w-full flex flex-col justify-center">
                 {slide.diagramType ? (
                   <InteractiveDiagram type={slide.diagramType} />
@@ -430,7 +428,6 @@ export const App: React.FC = () => {
                 </div>
               </div>
             </motion.div>
-          </AnimatePresence>
         </main>
 
         {/* Desktop Bottom Control Dock */}
