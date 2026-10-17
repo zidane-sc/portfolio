@@ -437,7 +437,7 @@ export const App: React.FC = () => {
               {String(currentSlideIndex + 1).padStart(2, '0')} / {String(totalSlides).padStart(2, '0')}
             </span>
             <span className="text-slate-600">|</span>
-            <span className="truncate max-w-sm">{slide.title}</span>
+            <span className="truncate max-w-md xl:max-w-xl text-slate-300 font-semibold">{slide.title}</span>
           </div>
 
           <div className="flex items-center gap-3">
