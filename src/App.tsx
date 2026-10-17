@@ -11,7 +11,6 @@ import confetti from 'canvas-confetti';
 
 export const App: React.FC = () => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
-  const [direction, setDirection] = useState<number>(0);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [showHelp, setShowHelp] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
@@ -76,7 +75,6 @@ export const App: React.FC = () => {
   // Navigation handlers for desktop slide mode
   const nextSlide = useCallback(() => {
     if (currentSlideIndex < totalSlides - 1) {
-      setDirection(1);
       setCurrentSlideIndex((prev) => prev + 1);
       setSelectedScreenshotIndex(0);
 
@@ -88,7 +86,6 @@ export const App: React.FC = () => {
 
   const prevSlide = useCallback(() => {
     if (currentSlideIndex > 0) {
-      setDirection(-1);
       setCurrentSlideIndex((prev) => prev - 1);
       setSelectedScreenshotIndex(0);
     }
@@ -96,7 +93,6 @@ export const App: React.FC = () => {
 
   const goToSlide = (index: number) => {
     if (index >= 0 && index < totalSlides && index !== currentSlideIndex) {
-      setDirection(index > currentSlideIndex ? 1 : -1);
       setCurrentSlideIndex(index);
       setSelectedScreenshotIndex(0);
     }
@@ -162,26 +158,6 @@ export const App: React.FC = () => {
       default:
         return 'text-sky-400 bg-sky-950/70 border-sky-500/40';
     }
-  };
-
-  const slideVariants = {
-    enter: (dir: number) => ({
-      x: dir > 0 ? 30 : -30,
-      opacity: 0,
-      scale: 0.98,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      scale: 1,
-      transition: { duration: 0.25, ease: 'easeOut' as const }
-    },
-    exit: (dir: number) => ({
-      x: dir > 0 ? -30 : 30,
-      opacity: 0,
-      scale: 0.98,
-      transition: { duration: 0.18, ease: 'easeIn' as const }
-    })
   };
 
   return (
