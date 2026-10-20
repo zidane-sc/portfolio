@@ -3,27 +3,196 @@
 @tailwind utilities;
 
 @layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
   body {
-    background-color: #070b14;
-    color: #f1f5f9;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    overflow-x: hidden;
-    user-select: text;
+    @apply bg-[#07090d] text-slate-100 antialiased;
+    overscroll-behavior: none;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-sky-400 ring-offset-2 ring-offset-[#07090d];
   }
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+@layer components {
+  /* The deck track. Horizontal scroll-snap does the paging natively, so
+     swipe on mobile and trackpad on desktop both work with zero JS gesture
+     handling — the browser already knows how to do this well. */
+  .deck {
+    display: flex;
+    height: 100dvh;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+  }
+  .deck::-webkit-scrollbar {
+    display: none;
+  }
+
+  .slide {
+    position: relative;
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100dvh;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    /* A slide that overflows on a small phone scrolls internally rather
+       than clipping its content. Safety valve, not the normal path. */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .slide-inner {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 4rem 1.25rem 4.75rem;
+    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom));
+  }
+  @media (min-width: 640px) {
+    .slide-inner {
+      padding: 5rem 2rem 5.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .slide-inner {
+      padding: 5rem 4rem 5.5rem;
+    }
+  }
+  /* Short viewports are the real constraint for a deck, not narrow ones.
+     A 320x568 phone and a 1366x768 laptop fail the same way: not enough
+     vertical room.
+     `zoom` is used rather than font-size because the slide's type is set in
+     fixed px utilities, which do not inherit a parent font-size. zoom scales
+     text, padding, and gaps together, which is exactly the "shrink the whole
+     slide to fit" behaviour wanted here. Supported in all current browsers;
+     unsupported ones simply render at 1:1 and the slide scrolls internally. */
+  @media (max-height: 900px) {
+    .slide-inner {
+      zoom: 0.95;
+    }
+  }
+  @media (max-height: 800px) {
+    .slide-inner {
+      zoom: 0.9;
+    }
+  }
+  @media (max-height: 700px) {
+    .slide-inner {
+      zoom: 0.82;
+    }
+  }
+  @media (max-height: 600px) {
+    .slide-inner {
+      zoom: 0.68;
+    }
+  }
+  /* Phone held sideways. Orientation is NOT locked — locking is unsupported
+     on iOS Safari outside fullscreen, and a "rotate your device" wall costs
+     more visitors than it saves. Instead the deck stays usable: a landscape
+     phone is only ~390px tall, so drop the supporting blocks and let the
+     problem/actions carry the slide. */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .slide-inner {
+      zoom: 0.55;
+      padding-top: 2rem;
+      padding-bottom: 3.25rem;
+    }
+    .hide-on-landscape {
+      display: none !important;
+    }
+    /* Five stacked cards cannot fit a 390px-tall phone. Scroll the row
+       horizontally here, same affordance the phone already uses. */
+    .also-grid {
+      display: flex !important;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+    }
+    .also-grid > * {
+      flex: 0 0 46%;
+      scroll-snap-align: start;
+    }
+  }
+  @media (max-width: 374px) {
+    .slide-inner {
+      padding-left: 1rem;
+      padding-right: 1rem;
+      padding-top: 2.75rem;
+    }
+  }
+  /* Least essential block on a slide. Dropped when vertical room is tight
+     (short laptops) so the important content still fits the fold. */
+  @media (max-height: 820px) {
+    .hide-on-short {
+      display: none !important;
+    }
+  }
+  /* Short laptop screens (1366x768 and friends) have less vertical room than
+     a tall phone — pull the chrome in rather than letting slides overflow. */
+  @media (min-width: 1024px) and (max-height: 820px) {
+    .slide-inner {
+      padding-top: 2.75rem;
+      padding-bottom: 4.25rem;
+    }
+  }
+
+  /* Preserve compact layouts while widening only desktop slides. */
+  @media (min-width: 640px) and (max-width: 1023px) {
+    .slide-inner { padding-top: 3rem; }
+  }
+  @media (min-width: 1024px) and (max-height: 820px) {
+    #kamiko .slide-inner { padding-top: 1.5rem; }
+    #kamiko img { max-height: 22dvh; }
+  }
+  @media (orientation: landscape) and (max-height: 500px) {
+    .slide-inner { min-height: 0; padding-top: 1rem; padding-bottom: 4rem; }
+    .slide-inner > .grid { margin-top: 1rem; }
+    .slide-inner > .grid.min-h-0 { grid-template-columns: 1.35fr 1fr; align-items: start; }
+    .slide-inner h2 { font-size: 28px; }
+  }
+
+  /* Entrance animation for the slide currently snapped into view. */
+  .slide[data-active='true'] .anim {
+    animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .anim {
+    opacity: 1;
+  }
+  .js .slide[data-active='false'] .anim {
+    opacity: 0;
+  }
 }
-::-webkit-scrollbar-track {
-  background: #070b14;
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 3px;
+
+@media (prefers-reduced-motion: reduce) {
+  .deck {
+    scroll-behavior: auto;
+  }
+  .slide[data-active='true'] .anim,
+  .js .slide[data-active='false'] .anim {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #334155;
-}
+
+.desktop-dock{position:fixed;right:24px;bottom:16px;z-index:30;display:flex;align-items:center;gap:16px;padding:10px 14px;background:#101923f5;border:1px solid #35465b;border-radius:16px;box-shadow:0 8px 32px #0008;max-width:calc(100vw - 48px)}
+.dock-top label{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.12em;color:#9caec4}.dock-top select{display:block;width:210px;min-height:32px;background:transparent;color:#edf6ff;font-size:13px;border:0}.dock-top option{background:#101923}
+.desktop-dock progress{position:absolute;bottom:0;left:14px;width:calc(100% - 28px);height:2px;accent-color:#7dd3fc}
+.dock-actions{display:flex;gap:8px}.dock-actions button{min-width:44px;min-height:44px;padding:8px 12px;border:1px solid #35465b;border-radius:10px;color:#cbd9e9;transition:background .15s}.dock-actions button:hover:not(:disabled){background:#22364b}.dock-actions button:disabled{opacity:.3}.dock-actions .dock-next{background:#89dcf4;color:#0b1823;border-color:#89dcf4}.dock-actions .dock-next:hover:not(:disabled){background:#b4ebfa}

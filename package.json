@@ -1,5 +1,5 @@
 {
-  "name": "web-portfolio",
+  "name": "portfolio",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check": "node scripts/check-layout.cjs",
+    "check-story": "node scripts/check-story.cjs",
+    "check-parity": "node scripts/check-parity.cjs"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
@@ -24,6 +27,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "autoprefixer": "^10.6.1",
     "oxlint": "^1.81.0",
+    "playwright-core": "^1.64.1",
     "postcss": "^8.5.30",
     "tailwindcss": "^3.4.17",
     "typescript": "~6.0.2",
